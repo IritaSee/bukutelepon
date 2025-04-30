@@ -99,7 +99,7 @@ export default function Home() {
 
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500">
         <p>© 2025 lokapediabali. All rights reserved.</p>
-        <p>Hasil kerjasama epik dalam semalam, antara Indoxx.ai, CABCODE.id, dan AI</p>
+        <p>Hasil kerjasama epik dalam semalam, antara Indoxx.ai, CABCODE.id, dan Claude 3.5 Sonnet dalam Github Copilot</p>
       </footer>
     </div>
   );

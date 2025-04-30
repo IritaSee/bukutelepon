@@ -53,7 +53,7 @@ async function main() {
       images: {
         create: [
           {
-            url: 'https://example.com/warung-made.jpg',
+            url: '/placeholder.jpg',
             alt: 'Warung Made Storefront',
             isFeatured: true
           }
@@ -73,7 +73,7 @@ async function main() {
         images: {
           create: [
             {
-              url: 'https://example.com/nasi-campur.jpg',
+              url: '/placeholder.jpg',
               alt: 'Nasi Campur Bali',
               isFeatured: true,
               smeId: warungMade.id
@@ -91,7 +91,7 @@ async function main() {
         images: {
           create: [
             {
-              url: 'https://example.com/bebek-betutu.jpg',
+              url: '/placeholder.jpg',
               alt: 'Bebek Betutu',
               isFeatured: true,
               smeId: warungMade.id
@@ -129,7 +129,7 @@ async function main() {
       images: {
         create: [
           {
-            url: 'https://example.com/dewi-art.jpg',
+            url: '/placeholder.jpg',
             alt: 'Dewi Art Gallery Storefront',
             isFeatured: true
           }
@@ -149,7 +149,7 @@ async function main() {
         images: {
           create: [
             {
-              url: 'https://example.com/lukisan-bali.jpg',
+              url: '/placeholder.jpg',
               alt: 'Lukisan Tradisional Bali',
               isFeatured: true,
               smeId: dewiArt.id
@@ -167,7 +167,7 @@ async function main() {
         images: {
           create: [
             {
-              url: 'https://example.com/patung-garuda.jpg',
+              url: '/placeholder.jpg',
               alt: 'Patung Garuda',
               isFeatured: true,
               smeId: dewiArt.id
@@ -205,7 +205,7 @@ async function main() {
       images: {
         create: [
           {
-            url: 'https://example.com/batu-bata.jpg',
+            url: '/placeholder.jpg',
             alt: 'Batu Bata Fashion Store',
             isFeatured: true
           }
@@ -225,7 +225,7 @@ async function main() {
         images: {
           create: [
             {
-              url: 'https://example.com/kemeja-endek.jpg',
+              url: '/placeholder.jpg',
               alt: 'Kemeja Endek Modern',
               isFeatured: true,
               smeId: batuBata.id
@@ -243,7 +243,7 @@ async function main() {
         images: {
           create: [
             {
-              url: 'https://example.com/dress-batik.jpg',
+              url: '/placeholder.jpg',
               alt: 'Dress Batik Bali',
               isFeatured: true,
               smeId: batuBata.id
