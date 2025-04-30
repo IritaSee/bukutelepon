@@ -11,17 +11,21 @@ interface CategoryWithRelation {
   };
 }
 
+type Props = {
+  params: {
+    id: string;
+  };
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: Props
 ) {
-  const { id } = params;
+  const { id } = props.params;
 
   try {
     const sme = await prisma.sME.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
       include: {
         images: true,
         products: {
