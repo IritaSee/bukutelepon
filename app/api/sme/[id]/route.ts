@@ -3,14 +3,24 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+interface CategoryWithRelation {
+  category: {
+    id: string;
+    name: string;
+    description: string | null;
+  };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id } = params;
+
   try {
     const sme = await prisma.sME.findUnique({
       where: {
-        id: params.id,
+        id,
       },
       include: {
         images: true,
@@ -29,7 +39,7 @@ export async function GET(
 
     if (!sme) {
       return NextResponse.json(
-        { error: 'SME tidak ditemukan' },
+        { error: 'UMKM tidak ditemukan' },
         { status: 404 }
       );
     }
@@ -37,7 +47,7 @@ export async function GET(
     return NextResponse.json({
       ...sme,
       location: `${sme.address}, ${sme.village}, ${sme.district}, ${sme.city}`,
-      categories: sme.categories.map(cat => cat.category),
+      categories: sme.categories.map((cat: CategoryWithRelation) => cat.category),
     });
   } catch (error) {
     console.error('Error fetching SME:', error);

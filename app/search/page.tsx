@@ -60,7 +60,7 @@ export default function SearchPage() {
       <nav className="sticky top-0 bg-white shadow-sm z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-blue-600">
+            <Link href="/" className="text-xl font-bold text-red-600">
               LokaPedia Bali
             </Link>
             <div className="w-2/3">
