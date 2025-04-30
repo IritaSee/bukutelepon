@@ -13,12 +13,18 @@ interface CategoryWithRelation {
   };
 }
 
+type Props = {
+  params: Promise<{
+    id: string
+  }>
+}
+
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: Props
 ): Promise<Response> {
-  const param = await params;
-  const id = await param.id;
+  const params = await props.params;
+  const { id } = params;
 
   try {
     const sme = await prisma.sME.findUnique({
