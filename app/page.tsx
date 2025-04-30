@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import SearchBar from "./components/SearchBar";
 
 const questions = [
   {
@@ -48,7 +48,7 @@ export default function Home() {
         <h1 className="text-4xl sm:text-5xl font-bold text-center">
           {questions[currentQuestionIndex].prefix}
           <span
-            className={`transition-opacity duration-500 ${
+            className={`transition-opacity text-red-500 duration-500 ${
               isTextVisible ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -56,26 +56,12 @@ export default function Home() {
           </span>
           {questions[currentQuestionIndex].suffix}
         </h1>
-        <p className="text-lg text-center text-gray-600">
+        <p className="text-lg text-center text-grey-600">
           Cari dan temukan UMKM di Bali dengan mudah dan cepat. Temukan rekan bisnis, supplier, dan peluang baru di satu tempat. LokaPedia Bali!
         </p>
         
         <div className="w-full">
-          <form className="w-full flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-grow">
-              <input 
-                type="search"
-                placeholder="Cari UMKM, produk, atau layanan..."
-                className="w-full px-6 py-4 text-lg rounded-full border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-8 py-4 text-lg font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700 transition-colors"
-            >
-              Cari
-            </button>
-          </form>
+          <SearchBar className="max-w-3xl mx-auto" />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full mt-8">
@@ -113,6 +99,7 @@ export default function Home() {
 
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500">
         <p>© 2025 lokapediabali. All rights reserved.</p>
+        <p>Hasil kerjasama epik dalam semalam, antara Indoxx.ai, CABCODE.id, dan AI</p>
       </footer>
     </div>
   );

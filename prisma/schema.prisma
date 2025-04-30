@@ -1,0 +1,87 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SME {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  name        String
+  description String      @db.Text
+  
+  // Contact Information
+  email       String?
+  phone       String?
+  whatsapp    String?
+  
+  // Social Media
+  facebook    String?
+  instagram   String?
+  twitter     String?
+  tiktok      String?
+  
+  // Website/Blog
+  website     String?
+  blog        String?
+  
+  // Location
+  address     String      @db.Text
+  city        String
+  district    String      // kecamatan
+  village     String      // desa
+  postalCode  String?
+  latitude    Float?
+  longitude   Float?
+  
+  // Relations
+  images      Image[]
+  products    Product[]
+  categories  CategoryOnSME[]
+}
+
+model Image {
+  id          String    @id @default(cuid())
+  url         String
+  alt         String?
+  isFeatured  Boolean   @default(false)
+  smeId       String
+  sme         SME       @relation(fields: [smeId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  description String    @db.Text
+  price       Float
+  isAvailable Boolean   @default(true)
+  smeId       String
+  sme         SME       @relation(fields: [smeId], references: [id], onDelete: Cascade)
+  images      Image[]
+}
+
+model Category {
+  id          String         @id @default(cuid())
+  name        String        @unique
+  description String?       @db.Text
+  smes        CategoryOnSME[]
+}
+
+model CategoryOnSME {
+  sme         SME       @relation(fields: [smeId], references: [id])
+  smeId       String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  assignedAt  DateTime  @default(now())
+
+  @@id([smeId, categoryId])
+}
