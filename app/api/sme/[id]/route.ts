@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+
+import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -12,10 +14,11 @@ interface CategoryWithRelation {
 }
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
-) {
-  const id = params.id;
+): Promise<Response> {
+  const param = await params;
+  const id = await param.id;
 
   try {
     const sme = await prisma.sME.findUnique({
