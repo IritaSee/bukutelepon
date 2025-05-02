@@ -1,5 +1,5 @@
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface SearchBarProps {
   defaultValue?: string;
@@ -8,7 +8,13 @@ interface SearchBarProps {
 
 export default function SearchBar({ defaultValue = '', className = '' }: SearchBarProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState(defaultValue);
+
+  useEffect(() => {
+    const q = searchParams.get('q') || defaultValue;
+    setQuery(q);
+  }, [searchParams, defaultValue]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

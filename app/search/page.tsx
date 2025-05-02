@@ -3,17 +3,13 @@
 import { Suspense } from 'react';
 import SearchResults from './SearchResults';
 import SearchBar from '../components/SearchBar';
+import { useSearchParams } from 'next/navigation';
 
-export default function SearchPage({
-  searchParams,
-}: {
-  searchParams: { q?: string };
-}) {
-  const query = searchParams.q || '';
+export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SearchBar defaultValue = {query} className="mb-8" />
+        <ClientSearchSection />
         <Suspense fallback={
           <div className="animate-pulse space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -34,5 +30,14 @@ export default function SearchPage({
         </Suspense>
       </div>
     </div>
+  );
+}
+
+function ClientSearchSection() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
+  
+  return (
+    <SearchBar defaultValue={query} className="mb-8" />
   );
 }

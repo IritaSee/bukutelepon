@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '../../auth/config';
 
 const prisma = new PrismaClient();
 
@@ -21,6 +21,7 @@ type Props = {
   }>
 }
 
+// GET endpoint - public access
 export async function GET(
   request: Request,
   props: Props
@@ -67,6 +68,7 @@ export async function GET(
   }
 }
 
+// PUT endpoint - requires authentication
 export async function PUT(
   request: Request,
   props: Props
@@ -87,7 +89,6 @@ export async function PUT(
 
   try {
     const data = await request.json();
-
     const updatedSME = await prisma.sME.update({
       where: { id },
       data: {
@@ -109,29 +110,31 @@ export async function PUT(
         postalCode: data.postalCode,
         latitude: data.latitude,
         longitude: data.longitude,
-        // Handle images
-        images: {
+        categories: {
           deleteMany: {},
-          create: data.images.map((image: { url: string; alt?: string }) => ({
-            url: image.url,
-            alt: image.alt,
-            isFeatured: false
+          create: data.categories.map((categoryId: string) => ({
+            category: {
+              connect: { id: categoryId }
+            }
           }))
         },
+        images: {
+          deleteMany: {},
+          create: data.images.map((image: { url: string; alt?: string }, index: number) => ({
+            url: image.url,
+            alt: image.alt,
+            isFeatured: index === 0
+          }))
+        }
       },
       include: {
         images: true,
-        products: {
-          include: {
-            images: true,
-          },
-        },
         categories: {
           include: {
-            category: true,
-          },
-        },
-      },
+            category: true
+          }
+        }
+      }
     });
 
     return NextResponse.json(updatedSME);
@@ -144,6 +147,7 @@ export async function PUT(
   }
 }
 
+// DELETE endpoint - requires authentication
 export async function DELETE(
   request: Request,
   props: Props
