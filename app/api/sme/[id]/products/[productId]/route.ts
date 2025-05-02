@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../auth/[...nextauth]/route';
+import { authOptions } from '../../../../auth/config';
 
 const prisma = new PrismaClient();
 
-type Props = {
-  params: {
-    id: string;
-    productId: string;
-  };
+type Params = {
+  id: string;
+  productId: string;
 };
 
-export async function PUT(request: Request, { params }: Props) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Params }
+) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
@@ -42,7 +43,6 @@ export async function PUT(request: Request, { params }: Props) {
             url: image.url,
             alt: image.alt,
             isFeatured: false,
-            smeId: params.id
           })) ?? []
         }
       },
@@ -61,7 +61,10 @@ export async function PUT(request: Request, { params }: Props) {
   }
 }
 
-export async function DELETE(request: Request, { params }: Props) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Params }
+) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
