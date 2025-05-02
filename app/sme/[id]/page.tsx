@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 // Dynamically import the Map component to avoid SSR issues with Leaflet
 const Map = dynamic(() => import('@/app/components/Map'), {
@@ -62,6 +63,7 @@ interface SMEDetails {
 
 export default function SMEDetailPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const [sme, setSME] = useState<SMEDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,21 +119,33 @@ export default function SMEDetailPage() {
     );
   }
 
+  const isOwner = session?.user?.sme?.id === sme.id;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with back button */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => window.history.back()}
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900">{sme.name}</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => window.history.back()}
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900">{sme.name}</h1>
+            </div>
+            {isOwner && (
+              <Link
+                href={`/sme/${sme.id}/edit`}
+                className="px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                Edit UMKM
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Map component
+const Map = dynamic(() => import('@/app/components/Map'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />
+  ),
+});
 
 interface UserFormData {
   name: string;
@@ -19,6 +28,8 @@ interface SMEFormData {
   village: string;
   postalCode: string;
   categories: string[];
+  latitude?: number;
+  longitude?: number;
 }
 
 export default function RegisterPage() {
@@ -26,6 +37,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [userFormData, setUserFormData] = useState<UserFormData>({
     name: '',
     email: '',
@@ -90,6 +102,40 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  // Add geocoding effect
+  useEffect(() => {
+    if (!smeFormData.address || !smeFormData.city || !smeFormData.district || !smeFormData.village) {
+      return;
+    }
+
+    let fullAddress = `${smeFormData.address}, ${smeFormData.village}, ${smeFormData.district}, ${smeFormData.city}`;
+    if (smeFormData.postalCode) {
+      fullAddress += `, ${smeFormData.postalCode}`;
+    }
+    
+    const timer = setTimeout(async () => {
+      try {
+        setGeocoding(true);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`);
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+          setSmeFormData(prev => ({
+            ...prev,
+            latitude: parseFloat(data[0].lat),
+            longitude: parseFloat(data[0].lon),
+          }));
+        }
+      } catch (err) {
+        console.error("Geocoding error:", err);
+      } finally {
+        setGeocoding(false);
+      }
+    }, 1000); // debounce for 1 second
+    
+    return () => clearTimeout(timer);
+  }, [smeFormData.address, smeFormData.city, smeFormData.district, smeFormData.village, smeFormData.postalCode]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -172,7 +218,7 @@ export default function RegisterPage() {
                   type="submit"
                   className="w-full px-6 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 >
-                  Lanjut
+                  Lanjutkan
                 </button>
               </div>
             </form>
@@ -274,6 +320,33 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {/* Location Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-gray-900">Lokasi pada Peta</h3>
+                    {geocoding && (
+                      <span className="text-sm text-gray-500">Mencari lokasi...</span>
+                    )}
+                  </div>
+                  
+                  {smeFormData.latitude && smeFormData.longitude ? (
+                    <div className="h-64 rounded-lg overflow-hidden">
+                      <Map
+                        latitude={smeFormData.latitude}
+                        longitude={smeFormData.longitude}
+                        name={smeFormData.name}
+                        address={`${smeFormData.address}, ${smeFormData.village}, ${smeFormData.district}, ${smeFormData.city}`}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-500 text-sm text-center px-4">
+                        Lokasi akan muncul di sini setelah Anda mengisi alamat lengkap
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-4">
                   <button
                     type="button"
@@ -297,3 +370,4 @@ export default function RegisterPage() {
       </div>
     </div>
   );
+}
