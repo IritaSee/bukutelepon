@@ -16,7 +16,7 @@ const questions = [
   },
   {
     prefix: "Mau cari ",
-    animated: "supplier celeng",
+    animated: "supplier undis",
     suffix: "?"
   },
   {

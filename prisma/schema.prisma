@@ -10,12 +10,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  sme       SME?     @relation("UserToSME")
+}
+
 model SME {
   id          String      @id @default(cuid())
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   name        String
   description String      @db.Text
+  
+  // Owner
+  userId      String      @unique
+  user        User        @relation("UserToSME", fields: [userId], references: [id], onDelete: Cascade)
   
   // Contact Information
   email       String?

@@ -34,6 +34,20 @@ export default function RootLayout({
             >
               LokaPedia Bali
             </Link>
+            <div className="flex gap-4">
+              <Link
+                href="/register"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-full hover:bg-red-700 transition-colors"
+              >
+                Daftarkan Usaha Anda
+              </Link>
+              <Link
+                href="/register"
+                className="px-4 py-2 text-sm font-medium text-black rounded-full hover:bg-red-500 hover:text-white transition-colors"
+              >
+                Login
+              </Link>
+            </div>
           </div>
         </nav>
         {children}
