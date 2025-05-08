@@ -1,14 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../auth/config';
 
 const prisma = new PrismaClient();
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string; productId: string } }
-) {
+type Context = {
+  params: Record<string, string | string[]>;
+};
+
+export async function PUT(request: Request, context: Context) {
+  const { id, productId } = context.params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
@@ -16,7 +18,7 @@ export async function PUT(
   }
 
   // Verify SME owner
-  if (session.user.sme.id !== params.id) {
+  if (session.user.sme.id !== id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -24,8 +26,8 @@ export async function PUT(
     const data = await request.json();
     const product = await prisma.product.update({
       where: {
-        id: params.productId,
-        smeId: params.id
+        id: productId as string,
+        smeId: id as string
       },
       data: {
         name: data.name,
@@ -56,10 +58,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string; productId: string } }
-) {
+export async function DELETE(request: Request, context: Context) {
+  const { id, productId } = context.params;
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
@@ -67,15 +67,15 @@ export async function DELETE(
   }
 
   // Verify SME owner
-  if (session.user.sme.id !== params.id) {
+  if (session.user.sme.id !== id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
     await prisma.product.delete({
       where: {
-        id: params.productId,
-        smeId: params.id
+        id: productId as string,
+        smeId: id as string
       }
     });
 
