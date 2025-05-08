@@ -351,17 +351,20 @@ export default function SMEDetailPage() {
                 </div>
               </div>
             )}
-
-            {/* Location Map */}
+            {/* Location */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h2 className="text-xl font-semibold mb-4">Lokasi</h2>
               <p className="text-gray-600 mb-4">{sme.location}</p>
-              <Map
-                latitude={sme.latitude}
-                longitude={sme.longitude}
-                name={sme.name}
-                address={sme.location}
-              />
+              {typeof sme.latitude === 'number' && typeof sme.longitude === 'number' ? (
+                <Map
+                  latitude={sme.latitude}
+                  longitude={sme.longitude}
+                  name={sme.name}
+                  address={sme.location}
+                />
+              ) : (
+                <div className="text-gray-500 italic">Lokasi tidak tersedia atau belum ditentukan.</div>
+              )}
             </div>
           </div>
         </div>
