@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import LocationPickerWithGoogleLink from '@/app/components/LocationPickerWithGoogleLink';
 
-// Dynamically import Map component
+// Dynamically import Map fallback component
 const Map = dynamic(() => import('@/app/components/Map'), {
   ssr: false,
-  loading: () => (
-    <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />
-  ),
+  loading: () => <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />,
 });
 
 interface UserFormData {
@@ -37,13 +36,14 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [geocoding, setGeocoding] = useState(false);
+
   const [userFormData, setUserFormData] = useState<UserFormData>({
     name: '',
     email: '',
     phone: '',
     password: '',
   });
+
   const [smeFormData, setSmeFormData] = useState<SMEFormData>({
     name: '',
     description: '',
@@ -67,9 +67,10 @@ export default function RegisterPage() {
 
   const handleSMESubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!smeFormData.name || !smeFormData.description || !smeFormData.address || 
-        !smeFormData.city || !smeFormData.district || !smeFormData.village) {
-      setError('Mohon lengkapi semua bagian yang wajib diisi');
+    if (!smeFormData.name || !smeFormData.description || !smeFormData.address ||
+        !smeFormData.city || !smeFormData.district || !smeFormData.village ||
+        !smeFormData.latitude || !smeFormData.longitude) {
+      setError('Mohon lengkapi semua data termasuk lokasi peta.');
       return;
     }
 
@@ -91,10 +92,9 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || 'Registrasi gagal');
       }
 
-      // Redirect to SME page or dashboard
       router.push(`/sme/${data.smeId}`);
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan saat mendaftar');
@@ -102,40 +102,6 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-
-  // Add geocoding effect
-  useEffect(() => {
-    if (!smeFormData.address || !smeFormData.city || !smeFormData.district || !smeFormData.village) {
-      return;
-    }
-
-    let fullAddress = `${smeFormData.address}, ${smeFormData.village}, ${smeFormData.district}, ${smeFormData.city}`;
-    if (smeFormData.postalCode) {
-      fullAddress += `, ${smeFormData.postalCode}`;
-    }
-    
-    const timer = setTimeout(async () => {
-      try {
-        setGeocoding(true);
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`);
-        const data = await res.json();
-        
-        if (data && data.length > 0) {
-          setSmeFormData(prev => ({
-            ...prev,
-            latitude: parseFloat(data[0].lat),
-            longitude: parseFloat(data[0].lon),
-          }));
-        }
-      } catch (err) {
-        console.error("Geocoding error:", err);
-      } finally {
-        setGeocoding(false);
-      }
-    }, 1000); // debounce for 1 second
-    
-    return () => clearTimeout(timer);
-  }, [smeFormData.address, smeFormData.city, smeFormData.district, smeFormData.village, smeFormData.postalCode]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -146,10 +112,9 @@ export default function RegisterPage() {
               {step === 1 ? 'Data Pemilik UMKM' : 'Informasi UMKM'}
             </h1>
             <p className="text-gray-600">
-              {step === 1 
+              {step === 1
                 ? 'Lengkapi data diri Anda sebagai pemilik UMKM'
-                : 'Lengkapi informasi tentang UMKM Anda'
-              }
+                : 'Lengkapi informasi tentang UMKM Anda'}
             </p>
           </div>
 
@@ -171,7 +136,7 @@ export default function RegisterPage() {
                     id="name"
                     value={userFormData.name}
                     onChange={(e) => setUserFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
                   />
                 </div>
 
@@ -184,7 +149,7 @@ export default function RegisterPage() {
                     id="email"
                     value={userFormData.email}
                     onChange={(e) => setUserFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
                   />
                 </div>
 
@@ -197,7 +162,7 @@ export default function RegisterPage() {
                     id="phone"
                     value={userFormData.phone}
                     onChange={(e) => setUserFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
                   />
                 </div>
 
@@ -210,13 +175,13 @@ export default function RegisterPage() {
                     id="password"
                     value={userFormData.password}
                     onChange={(e) => setUserFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full px-6 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="w-full px-6 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600"
                 >
                   Lanjutkan
                 </button>
@@ -234,7 +199,7 @@ export default function RegisterPage() {
                     id="sme-name"
                     value={smeFormData.name}
                     onChange={(e) => setSmeFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
                   />
                 </div>
 
@@ -247,7 +212,7 @@ export default function RegisterPage() {
                     value={smeFormData.description}
                     onChange={(e) => setSmeFormData(prev => ({ ...prev, description: e.target.value }))}
                     rows={4}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
                   />
                 </div>
 
@@ -260,7 +225,7 @@ export default function RegisterPage() {
                     value={smeFormData.address}
                     onChange={(e) => setSmeFormData(prev => ({ ...prev, address: e.target.value }))}
                     rows={2}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300"
                   />
                 </div>
 
@@ -274,7 +239,7 @@ export default function RegisterPage() {
                       id="city"
                       value={smeFormData.city}
                       onChange={(e) => setSmeFormData(prev => ({ ...prev, city: e.target.value }))}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300"
                     />
                   </div>
 
@@ -287,7 +252,7 @@ export default function RegisterPage() {
                       id="district"
                       value={smeFormData.district}
                       onChange={(e) => setSmeFormData(prev => ({ ...prev, district: e.target.value }))}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300"
                     />
                   </div>
                 </div>
@@ -302,7 +267,7 @@ export default function RegisterPage() {
                       id="village"
                       value={smeFormData.village}
                       onChange={(e) => setSmeFormData(prev => ({ ...prev, village: e.target.value }))}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300"
                     />
                   </div>
 
@@ -315,50 +280,33 @@ export default function RegisterPage() {
                       id="postal-code"
                       value={smeFormData.postalCode}
                       onChange={(e) => setSmeFormData(prev => ({ ...prev, postalCode: e.target.value }))}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300"
                     />
                   </div>
                 </div>
 
-                {/* Location Section */}
+                {/* Location Section with Share Link */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900">Lokasi pada Peta</h3>
-                    {geocoding && (
-                      <span className="text-sm text-gray-500">Mencari lokasi...</span>
-                    )}
-                  </div>
-                  
-                  {smeFormData.latitude && smeFormData.longitude ? (
-                    <div className="h-64 rounded-lg overflow-hidden">
-                      <Map
-                        latitude={smeFormData.latitude}
-                        longitude={smeFormData.longitude}
-                        name={smeFormData.name}
-                        address={`${smeFormData.address}, ${smeFormData.village}, ${smeFormData.district}, ${smeFormData.city}`}
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-500 text-sm text-center px-4">
-                        Lokasi akan muncul di sini setelah Anda mengisi alamat lengkap
-                      </p>
-                    </div>
-                  )}
+                  <h3 className="text-lg font-medium text-gray-900">Lokasi UMKM (dari Google Maps)</h3>
+                  <LocationPickerWithGoogleLink
+                    onLocationExtracted={(lat, lng) =>
+                      setSmeFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))
+                    }
+                  />
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex gap-4 pt-6">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                    className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
                     Kembali
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 px-6 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50"
                   >
                     {loading ? 'Mendaftar...' : 'Daftar'}
                   </button>
