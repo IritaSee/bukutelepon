@@ -5,14 +5,9 @@ import { authOptions } from '../../../../auth/config';
 
 const prisma = new PrismaClient();
 
-type RouteSegment = {
-  id: string;
-  productId: string;
-}
-
 export async function PUT(
-  request: Request,
-  { params }: { params: RouteSegment }
+  req: Request,
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   
@@ -26,7 +21,7 @@ export async function PUT(
   }
 
   try {
-    const data = await request.json();
+    const data = await req.json();
     const product = await prisma.product.update({
       where: {
         id: params.productId,
@@ -62,8 +57,8 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: RouteSegment }
+  req: Request,
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   
