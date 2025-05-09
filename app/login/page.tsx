@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -20,29 +19,39 @@ export default function LoginPage() {
       setError('Mohon lengkapi semua bagian yang wajib diisi');
       return;
     }
-
+  
     setLoading(true);
     setError('');
-
+  
     try {
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
         redirect: false
       });
-
+  
       if (result?.error) {
         throw new Error(result.error);
       }
-
-      // Successful login - refresh the page which will then redirect based on session
-      router.refresh();
+  
+      // Ambil session setelah login berhasil
+      const sessionRes = await fetch('/api/auth/session');
+      const session = await sessionRes.json();
+  
+      const smeId = session?.user?.sme?.id;
+  
+      if (smeId) {
+        router.push(`/sme/${smeId}`);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan saat login');
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
