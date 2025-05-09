@@ -3,18 +3,18 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../auth/config';
 import { prisma } from '@/lib/prisma';
 
-type RequestContext = {
-  params: { id: string; productId: string }
-};
-
-export async function PUT(request: Request, context: RequestContext) {
+// Fix: Change the handler parameters to match Next.js App Router expectations
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string; productId: string } }
+) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id, productId } = context.params;
+  const { id, productId } = params;
 
   // Verify SME owner
   if (session.user.sme.id !== id) {
@@ -57,14 +57,18 @@ export async function PUT(request: Request, context: RequestContext) {
   }
 }
 
-export async function DELETE(request: Request, context: RequestContext) {
+// Fix: Also update the DELETE method with the correct parameter format
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string; productId: string } }
+) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id, productId } = context.params;
+  const { id, productId } = params;
 
   // Verify SME owner
   if (session.user.sme.id !== id) {
