@@ -5,12 +5,15 @@ import { authOptions } from '../../../../auth/config';
 
 const prisma = new PrismaClient();
 
-type Context = {
-  params: Record<string, string | string[]>;
-};
+type RouteSegment = {
+  id: string;
+  productId: string;
+}
 
-export async function PUT(request: Request, context: Context) {
-  const { id, productId } = context.params;
+export async function PUT(
+  request: Request,
+  { params }: { params: RouteSegment }
+) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
@@ -18,7 +21,7 @@ export async function PUT(request: Request, context: Context) {
   }
 
   // Verify SME owner
-  if (session.user.sme.id !== id) {
+  if (session.user.sme.id !== params.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -26,8 +29,8 @@ export async function PUT(request: Request, context: Context) {
     const data = await request.json();
     const product = await prisma.product.update({
       where: {
-        id: productId as string,
-        smeId: id as string
+        id: params.productId,
+        smeId: params.id
       },
       data: {
         name: data.name,
@@ -58,8 +61,10 @@ export async function PUT(request: Request, context: Context) {
   }
 }
 
-export async function DELETE(request: Request, context: Context) {
-  const { id, productId } = context.params;
+export async function DELETE(
+  request: Request,
+  { params }: { params: RouteSegment }
+) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
@@ -67,15 +72,15 @@ export async function DELETE(request: Request, context: Context) {
   }
 
   // Verify SME owner
-  if (session.user.sme.id !== id) {
+  if (session.user.sme.id !== params.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
     await prisma.product.delete({
       where: {
-        id: productId as string,
-        smeId: id as string
+        id: params.productId,
+        smeId: params.id
       }
     });
 
