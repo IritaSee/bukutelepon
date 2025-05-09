@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import SearchBar from "./components/SearchBar";
 
 const questions = [
@@ -61,7 +61,9 @@ export default function Home() {
         </p>
         
         <div className="w-full">
-          <SearchBar className="max-w-3xl mx-auto" />
+          <Suspense fallback={<div className="w-full h-14 bg-gray-100 animate-pulse rounded-full" />}>
+            <SearchBar className="max-w-3xl mx-auto" />
+          </Suspense>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full mt-8">
