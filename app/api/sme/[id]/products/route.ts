@@ -5,14 +5,11 @@ import { authOptions } from '../../../auth/config';
 
 const prisma = new PrismaClient();
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
 // Create a new product
-export async function POST(request: Request, { params }: Props) {
+export async function POST(
+  request: Request,
+  { params }: any
+) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
@@ -58,7 +55,10 @@ export async function POST(request: Request, { params }: Props) {
 }
 
 // Get all products for an SME
-export async function GET(request: Request, { params }: Props) {
+export async function GET(
+  request: Request,
+  { params }: any
+) {
   try {
     const products = await prisma.product.findMany({
       where: {
