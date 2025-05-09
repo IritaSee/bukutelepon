@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
   try {
@@ -15,11 +13,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
-        sme: true
+        sme: {
+          include: {
+            images: {
+              where: { isFeatured: true },
+              take: 1
+            }
+          }
+        }
       }
     });
 
@@ -30,7 +34,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -40,10 +43,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return user data without password
+    // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json(userWithoutPassword);
     
+    return NextResponse.json({
+      ...userWithoutPassword,
+      sme: user.sme ? {
+        ...user.sme,
+        featuredImage: user.sme.images[0]?.url || '/placeholder.jpg'
+      } : null
+    });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

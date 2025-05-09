@@ -1,23 +1,47 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../auth/config';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+type RequestContext = {
+  params: { id: string }
+};
 
-// Create a new product
-export async function POST(
-  request: Request,
-  { params }: any
-) {
+export async function GET(request: Request, context: RequestContext) {
+  try {
+    const { id } = context.params;
+    
+    const products = await prisma.product.findMany({
+      where: { smeId: id },
+      include: {
+        images: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return NextResponse.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return NextResponse.json(
+      { error: 'Terjadi kesalahan saat memuat produk' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request, context: RequestContext) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { id } = context.params;
+
   // Verify SME owner
-  if (session.user.sme.id !== params.id) {
+  if (session.user.sme.id !== id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -29,13 +53,13 @@ export async function POST(
         description: data.description,
         price: data.price,
         isAvailable: data.isAvailable ?? true,
-        smeId: params.id,
+        smeId: id,
         images: {
           create: data.images?.map((image: { url: string; alt?: string }) => ({
             url: image.url,
             alt: image.alt,
             isFeatured: false,
-            smeId: params.id
+            smeId: id
           })) ?? []
         }
       },
@@ -48,32 +72,7 @@ export async function POST(
   } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
-  }
-}
-
-// Get all products for an SME
-export async function GET(
-  request: Request,
-  { params }: any
-) {
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        smeId: params.id
-      },
-      include: {
-        images: true
-      }
-    });
-
-    return NextResponse.json(products);
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat membuat produk' },
       { status: 500 }
     );
   }

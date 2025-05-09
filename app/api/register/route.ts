@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
   try {
     const { name, email, phone, password, sme } = await request.json();
+
+    // Validate required fields
+    if (!name || !email || !password || !sme.name || !sme.description || !sme.address) {
+      return NextResponse.json(
+        { error: 'Data wajib tidak lengkap' },
+        { status: 400 }
+      );
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -25,7 +31,6 @@ export async function POST(request: Request) {
 
     // Create user and SME in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create user with nested SME creation
       const user = await tx.user.create({
         data: {
           name,
@@ -43,16 +48,20 @@ export async function POST(request: Request) {
               postalCode: sme.postalCode,
               latitude: sme.latitude,
               longitude: sme.longitude,
-              // Only create category connections if categories are provided
-              ...(sme.categories?.length > 0 ? {
-                categories: {
-                  create: sme.categories.map((categoryId: string) => ({
-                    category: {
-                      connect: { id: categoryId }
-                    }
-                  }))
-                }
-              } : {})
+              categories: sme.categories?.length > 0 ? {
+                create: sme.categories.map((categoryId: string) => ({
+                  category: {
+                    connect: { id: categoryId }
+                  }
+                }))
+              } : undefined,
+              images: sme.images?.length > 0 ? {
+                create: sme.images.map((image: { url: string; alt?: string }, index: number) => ({
+                  url: image.url,
+                  alt: image.alt,
+                  isFeatured: index === 0
+                }))
+              } : undefined
             }
           }
         },
@@ -65,14 +74,14 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: 'Registration successful',
+      message: 'Registrasi berhasil',
       userId: result.user.id,
       smeId: result.sme?.id,
     });
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat mendaftar' },
       { status: 500 }
     );
   }

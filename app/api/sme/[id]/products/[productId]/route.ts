@@ -1,31 +1,32 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../auth/config';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+type RequestContext = {
+  params: { id: string; productId: string }
+};
 
-export async function PUT(
-  req: Request,
-  { params }: any
-) {
+export async function PUT(request: Request, context: RequestContext) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { id, productId } = context.params;
+
   // Verify SME owner
-  if (session.user.sme.id !== params.id) {
+  if (session.user.sme.id !== id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
-    const data = await req.json();
+    const data = await request.json();
     const product = await prisma.product.update({
       where: {
-        id: params.productId,
-        smeId: params.id
+        id: productId,
+        smeId: id
       },
       data: {
         name: data.name,
@@ -50,40 +51,39 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating product:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat mengupdate produk' },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: any
-) {
+export async function DELETE(request: Request, context: RequestContext) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { id, productId } = context.params;
+
   // Verify SME owner
-  if (session.user.sme.id !== params.id) {
+  if (session.user.sme.id !== id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
     await prisma.product.delete({
       where: {
-        id: params.productId,
-        smeId: params.id
+        id: productId,
+        smeId: id
       }
     });
 
-    return NextResponse.json({ message: 'Product deleted successfully' });
+    return NextResponse.json({ message: 'Produk berhasil dihapus' });
   } catch (error) {
     console.error('Error deleting product:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat menghapus produk' },
       { status: 500 }
     );
   }

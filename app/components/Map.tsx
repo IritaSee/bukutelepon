@@ -1,54 +1,90 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect } from 'react';
-
-// Fix for default marker icon in Leaflet with Next.js
-const icon = new L.Icon({
-  iconUrl: '/marker-icon.png',
-  shadowUrl: '/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
 
 interface MapProps {
   latitude: number;
   longitude: number;
-  name: string;
-  address: string;
+  name?: string;
+  address?: string;
+  zoom?: number;
+  className?: string;
 }
 
-export default function Map({ latitude, longitude, name, address }: MapProps) {
-  useEffect(() => {
-    // Fix for Leaflet map container height in Safari
-    const mapContainer = document.querySelector('.leaflet-container');
-    if (mapContainer) {
-      (mapContainer as HTMLElement).style.height = '400px';
-    }
-  }, []);
+// Fix for Leaflet marker icons in Next.js
+const fixLeafletMarker = () => {
+  (L.Icon.Default as any).imagePath = '/';
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: '/marker-icon.png',
+    iconUrl: '/marker-icon.png',
+    shadowUrl: '/marker-shadow.png',
+  });
+};
 
-  const position: L.LatLngTuple = [latitude, longitude];
+export default function Map({
+  latitude,
+  longitude,
+  name,
+  address,
+  zoom = 15,
+  className = ''
+}: MapProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Initialize Leaflet marker icons
+    fixLeafletMarker();
+
+    // Initialize map if it doesn't exist
+    if (!mapRef.current) {
+      mapRef.current = L.map(`map-${latitude}-${longitude}`).setView([latitude, longitude], zoom);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(mapRef.current);
+
+      // Add marker
+      markerRef.current = L.marker([latitude, longitude])
+        .addTo(mapRef.current)
+        .bindPopup(
+          name && address 
+            ? `<b>${name}</b><br>${address}`
+            : `${latitude}, ${longitude}`
+        )
+        .openPopup();
+    } else {
+      // Update map view and marker position
+      mapRef.current.setView([latitude, longitude], zoom);
+      if (markerRef.current) {
+        markerRef.current.setLatLng([latitude, longitude])
+          .bindPopup(
+            name && address 
+              ? `<b>${name}</b><br>${address}`
+              : `${latitude}, ${longitude}`
+          )
+          .openPopup();
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markerRef.current = null;
+      }
+    };
+  }, [latitude, longitude, name, address, zoom]);
 
   return (
-    <MapContainer
-      center={position}
-      zoom={16}
-      scrollWheelZoom={false}
-      style={{ height: '400px' }}
-      className="w-full rounded-lg"
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <Marker position={position} icon={icon}>
-        <Popup>
-          <div className="font-semibold">{name}</div>
-          <div className="text-sm">{address}</div>
-        </Popup>
-      </Marker>
-    </MapContainer>
+    <div 
+      id={`map-${latitude}-${longitude}`}
+      className={`w-full h-[400px] rounded-lg ${className}`}
+    />
   );
 }

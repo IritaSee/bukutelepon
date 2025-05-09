@@ -1,47 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 type SMEWithImages = Awaited<ReturnType<typeof prisma.sME.findFirst>> & {
   images: { url: string }[];
 };
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const query = searchParams.get('q') || '';
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = 27; // Items per page
-  const offset = (page - 1) * limit;
-
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const query = searchParams.get('q') || '';
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = 27;
+    const offset = (page - 1) * limit;
+
+    const searchCondition = {
+      OR: [
+        { name: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+        {
+          products: {
+            some: {
+              OR: [
+                { name: { contains: query, mode: 'insensitive' } },
+                { description: { contains: query, mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
+        {
+          categories: {
+            some: {
+              category: {
+                name: { contains: query, mode: 'insensitive' },
+              },
+            },
+          },
+        },
+      ],
+    };
+
     const [smes, total] = await Promise.all([
       prisma.sME.findMany({
-        where: {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-            {
-              products: {
-                some: {
-                  OR: [
-                    { name: { contains: query, mode: 'insensitive' } },
-                    { description: { contains: query, mode: 'insensitive' } },
-                  ],
-                },
-              },
-            },
-            {
-              categories: {
-                some: {
-                  category: {
-                    name: { contains: query, mode: 'insensitive' },
-                  },
-                },
-              },
-            },
-          ],
-        },
+        where: searchCondition,
         include: {
           images: {
             where: {
@@ -52,33 +52,12 @@ export async function GET(request: NextRequest) {
         },
         skip: offset,
         take: limit,
+        orderBy: {
+          name: 'asc'
+        },
       }),
       prisma.sME.count({
-        where: {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-            {
-              products: {
-                some: {
-                  OR: [
-                    { name: { contains: query, mode: 'insensitive' } },
-                    { description: { contains: query, mode: 'insensitive' } },
-                  ],
-                },
-              },
-            },
-            {
-              categories: {
-                some: {
-                  category: {
-                    name: { contains: query, mode: 'insensitive' },
-                  },
-                },
-              },
-            },
-          ],
-        },
+        where: searchCondition,
       }),
     ]);
 
@@ -95,7 +74,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat mencari. Silakan coba lagi.' },
       { status: 500 }
     );
   }

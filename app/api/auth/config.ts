@@ -1,10 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { RequestInternal } from 'next-auth';
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -38,7 +36,6 @@ export const authOptions: NextAuthOptions = {
         }
 
         const { password: _, ...userWithoutPassword } = user;
-        // Convert null to undefined for sme property to match expected type
         return {
           ...userWithoutPassword,
           sme: userWithoutPassword.sme || undefined

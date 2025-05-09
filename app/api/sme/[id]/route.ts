@@ -1,33 +1,16 @@
-export const dynamic = 'force-dynamic';
-
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/config';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
-interface CategoryWithRelation {
-  category: {
-    id: string;
-    name: string;
-    description: string | null;
-  };
-}
+type RequestContext = {
+  params: { id: string }
+};
 
-type Props = {
-  params: Promise<{
-    id: string
-  }>
-}
-
-// GET endpoint - public access
-export async function GET(
-  request: Request,
-  props: Props
-): Promise<Response> {
-  const params = await props.params;
-  const { id } = params;
+export async function GET(request: Request, context: RequestContext) {
+  const { id } = context.params;
 
   try {
     const sme = await prisma.sME.findUnique({
@@ -57,30 +40,25 @@ export async function GET(
     return NextResponse.json({
       ...sme,
       location: `${sme.address}, ${sme.village}, ${sme.district}, ${sme.city}`,
-      categories: sme.categories.map((cat: CategoryWithRelation) => cat.category),
+      categories: sme.categories.map((cat) => cat.category),
     });
   } catch (error) {
     console.error('Error fetching SME:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat memuat data' },
       { status: 500 }
     );
   }
 }
 
-// PUT endpoint - requires authentication
-export async function PUT(
-  request: Request,
-  props: Props
-): Promise<Response> {
+export async function PUT(request: Request, context: RequestContext) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const params = await props.params;
-  const { id } = params;
+  const { id } = context.params;
 
   // Verify owner
   if (session.user.sme.id !== id) {
@@ -141,25 +119,20 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating SME:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat mengupdate data' },
       { status: 500 }
     );
   }
 }
 
-// DELETE endpoint - requires authentication
-export async function DELETE(
-  request: Request,
-  props: Props
-): Promise<Response> {
+export async function DELETE(request: Request, context: RequestContext) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.sme) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const params = await props.params;
-  const { id } = params;
+  const { id } = context.params;
 
   // Verify owner
   if (session.user.sme.id !== id) {
@@ -171,11 +144,11 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({ message: 'SME deleted successfully' });
+    return NextResponse.json({ message: 'UMKM berhasil dihapus' });
   } catch (error) {
     console.error('Error deleting SME:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Terjadi kesalahan saat menghapus data' },
       { status: 500 }
     );
   }

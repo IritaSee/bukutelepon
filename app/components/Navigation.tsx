@@ -1,11 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
+import { useTransition } from 'react';
 
 export default function Navigation() {
   const { data: session, status } = useSession();
+  const [isPending, startTransition] = useTransition();
   const loading = status === 'loading';
+
+  const handleSignOut = () => {
+    startTransition(() => {
+      signOut({ callbackUrl: '/' });
+    });
+  };
 
   return (
     <nav className="bg-white shadow">
@@ -19,7 +27,7 @@ export default function Navigation() {
 
         <div className="flex gap-4 items-center">
           {loading ? (
-            <div className="animate-pulse w-20 h-8 bg-gray-200 rounded-full"></div>
+            <div className="animate-pulse w-20 h-8 bg-gray-200 rounded-full" />
           ) : session?.user ? (
             <>
               {session.user.sme && (
@@ -31,25 +39,26 @@ export default function Navigation() {
                 </Link>
               )}
               <button
-                onClick={() => signOut()}
-                className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
+                onClick={handleSignOut}
+                disabled={isPending}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
               >
-                Logout
+                {isPending ? 'Keluar...' : 'Keluar'}
               </button>
             </>
           ) : (
             <>
               <Link
                 href="/login"
-                className="px-4 py-2 text-sm font-medium text-black hover:text-gray-900 hover:rounded-full hover:bg-red-500 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Login
+                Masuk
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-full hover:bg-red-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
               >
-                Daftarkan Usaha Anda
+                Daftar UMKM
               </Link>
             </>
           )}

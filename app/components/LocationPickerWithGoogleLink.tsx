@@ -2,34 +2,33 @@
 
 import { useState } from 'react';
 
+interface LocationPickerProps {
+  onLocationExtracted?: (lat: number, lng: number, embedUrl: string) => void;
+}
+
+interface MapResponse {
+  lat?: number;
+  lng?: number;
+  original?: string;
+  error?: string;
+}
+
 export default function LocationPickerWithGoogleLink({
   onLocationExtracted,
-}: {
-  onLocationExtracted?: (lat: number, lng: number, embedUrl: string) => void;
-}) {
+}: LocationPickerProps) {
   const [shareLink, setShareLink] = useState('');
   const [error, setError] = useState('');
   const [embedUrl, setEmbedUrl] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const extractLatLngFromURL = (url: string): { lat: number; lng: number } | null => {
-    try {
-      const match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-      if (match && match.length >= 3) {
-        return {
-          lat: parseFloat(match[1]),
-          lng: parseFloat(match[2]),
-        };
-      }
-    } catch {}
-    return null;
-  };
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputUrl = e.target.value.trim();
     setShareLink(inputUrl);
     setError('');
     setEmbedUrl('');
+
+    if (!inputUrl) return;
+
     setLoading(true);
   
     try {
@@ -39,11 +38,10 @@ export default function LocationPickerWithGoogleLink({
         body: JSON.stringify({ url: inputUrl }),
       });
   
-      const data = await res.json();
+      const data: MapResponse = await res.json();
   
-      if (!res.ok) {
-        setError(data.error || 'Link tidak valid');
-        return;
+      if (!res.ok || !data.lat || !data.lng) {
+        throw new Error(data.error || 'Link tidak valid');
       }
   
       const { lat, lng } = data;
@@ -52,17 +50,16 @@ export default function LocationPickerWithGoogleLink({
       onLocationExtracted?.(lat, lng, embed);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError('Gagal mengambil data dari server');
+      setError(err instanceof Error ? err.message : 'Gagal mengambil data dari server');
     } finally {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        Tempelkan Link Google Maps dari Tombol “Bagikan”
+        Tempelkan Link Google Maps dari Tombol "Bagikan"
       </label>
       <input
         type="url"
@@ -75,7 +72,11 @@ export default function LocationPickerWithGoogleLink({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {embedUrl && (
+      {loading && (
+        <div className="w-full aspect-video bg-gray-100 animate-pulse rounded-lg" />
+      )}
+
+      {embedUrl && !loading && (
         <div className="aspect-video rounded overflow-hidden border border-gray-300">
           <iframe
             src={embedUrl}
@@ -83,6 +84,7 @@ export default function LocationPickerWithGoogleLink({
             height="100%"
             loading="lazy"
             allowFullScreen
+            title="Google Maps Location"
           />
         </div>
       )}
